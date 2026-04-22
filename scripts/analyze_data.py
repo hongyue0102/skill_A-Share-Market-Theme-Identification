@@ -159,9 +159,9 @@ def analyze_anchor_stocks(stock_top_rise, stock_value, limit_up_count):
         if total_val > 500e8:
             role = "趋势中军"
         elif rise >= 19.9:
-            role = "情绪龙头（20cm）"
+            role = "情绪标的（20cm）"
         else:
-            role = "情绪龙头" if amount > 10e8 else "补涨标的"
+            role = "情绪标的" if amount > 10e8 else "补涨标的"
 
         all_info.append({
             "code": code,
@@ -175,12 +175,12 @@ def analyze_anchor_stocks(stock_top_rise, stock_value, limit_up_count):
     all_info.sort(key=lambda x: x["amount"], reverse=True)
 
     # 按角色各取代表性个股，总共 5-8 只
-    leaders = [s for s in all_info if s["role"] in ("情绪龙头", "情绪龙头（20cm）")]
+    leaders = [s for s in all_info if s["role"] in ("情绪标的", "情绪标的（20cm）")]
     mid_trend = [s for s in all_info if s["role"] == "趋势中军"]
     followers = [s for s in all_info if s["role"] == "补涨标的"]
 
     anchors = []
-    # 情绪龙头取成交额前 3
+    # 情绪标的取成交额前 3
     anchors.extend(leaders[:3])
     # 趋势中军取前 2
     anchors.extend(mid_trend[:2])

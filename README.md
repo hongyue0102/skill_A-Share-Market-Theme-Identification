@@ -6,7 +6,7 @@
 
 ```
 fetch_data.py (取数) → analyze_data.py (分析) → generate_report.py (大模型生成报告)
-      ~8min                  <1s                         ~10s
+      ~2min                  <1s                         ~10s
 ```
 
 ## 快速开始
@@ -63,10 +63,10 @@ python generate_report.py
 |------|------|
 | 1. 市场环境 | 三大指数行情表格 + 环境判断 + 操作建议 |
 | 2. 当前主线 | 1-2条主线，含涨幅、涨停股、催化因素、舆情 |
-| 3. 次级热点 | 2-3个次级方向 |
-| 4. 核心锚点个股 | 5-8只，标注情绪龙头/趋势中军/补涨标的 |
-| 5. 情绪周期 | 冰点/修复/主升/高位震荡/退潮 |
-| 6. 主线持续性评估 | 产业逻辑+事件催化+资金合力三维度打分 |
+| 3. 次级热点 | 1个次级方向 |
+| 4. 核心锚点个股 | 5-8只，排除新股，标注情绪标的/情绪标的20cm/趋势中军/补涨标的 |
+| 5. 情绪周期 | 冰点/调整/修复/主升/高潮 |
+| 6. 主线持续性评估 | 周涨幅趋势+月线方向+日涨幅强度+正面舆情四维度打分 |
 | 7. 明日观察重点 | 具体可操作的观察点 |
 | 8. 一句话交易结论 | 核心操作建议 |
 
@@ -80,7 +80,9 @@ python generate_report.py
 | `LLM_BASE_URL` | 否 | 智谱 | OpenAI 兼容接口地址 |
 | `LLM_MODEL` | 否 | `glm-5.1` | 模型名称 |
 
-支持的模型（任选一个）：
+支持任何 OpenAI 兼容接口的大模型，配置 `LLM_BASE_URL` 和 `LLM_MODEL` 即可。常见选择：
 - 智谱：`glm-5.1`、`glm-4-plus`
 - DeepSeek：`deepseek-chat`（base_url 改为 `https://api.deepseek.com/v1`）
 - 通义：`qwen-plus`（base_url 改为 `https://dashscope.aliyuncs.com/compatible-mode/v1`）
+- OpenAI：`gpt-4o`（base_url 改为 `https://api.openai.com/v1`）
+- Claude：`claude-sonnet-4-6`（通过 OpenAI 兼容代理）
