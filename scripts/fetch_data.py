@@ -34,6 +34,41 @@ SW_L1_INDUSTRIES = [
     "传媒", "农林牧渔", "综合", "建筑装饰",
 ]
 
+# 申万2021二级行业列表
+SW_L2_INDUSTRIES = [
+    "半导体", "光学光电", "消费电子", "元件", "电子化学品", "其他电子",
+    "计算机设备", "IT服务", "软件开发", "计算机应用",
+    "通信设备", "通信服务",
+    "游戏", "影视院线", "数字媒体", "社交", "出版", "广告营销",
+    "化学制药", "中药", "生物制品", "医药商业", "医疗器械", "医疗服务",
+    "电池", "光伏设备", "风电设备", "电网设备",
+    "通用设备", "专用设备", "仪器仪表", "自动化设备", "金属制品",
+    "航空装备", "航天装备", "军工电子",
+    "乘用车", "商用车", "汽车零部件", "摩托车及其他",
+    "工业金属", "贵金属", "能源金属", "金属新材料",
+    "化学制品", "塑料", "橡胶", "农化制品", "非金属材料", "化学原料",
+    "火力发电", "水力发电", "光伏发电", "风力发电", "其他发电", "燃气", "环保",
+    "煤炭开采", "焦炭",
+    "油气开采", "炼化及贸易", "油服工程",
+    "国有大型银行", "股份制银行", "城商行",
+    "证券", "保险", "多元金融",
+    "房地产开发", "房地产服务",
+    "房屋建设", "装修装饰", "基建市政", "专业工程",
+    "水泥", "玻璃玻纤", "装修建材",
+    "普钢", "特钢",
+    "种植业", "渔业", "饲料", "养殖", "农产品加工",
+    "白酒", "非白酒", "饮料乳品", "零食", "调味品",
+    "白色家电", "黑色家电", "小家电",
+    "纺织制造", "服装家纺", "饰品",
+    "造纸", "家居", "包装印刷", "文娱用品",
+    "一般零售", "专业连锁", "贸易", "互联网电商",
+    "酒店餐饮", "旅游及景区", "教育", "专业服务",
+    "铁路公路", "航空机场", "航运港口", "物流",
+    "个护用品", "化妆品", "医疗美容",
+    "综合",
+    "环境治理", "环保设备", "水务",
+]
+
 
 def safe_float(val, default=0.0):
     if val in (None, "", "NaN"):
@@ -157,6 +192,27 @@ def main():
             industry_quotes.extend(f.result())
     industry_quotes.sort(key=lambda x: float(x.get("INDU_LIMIT_DAY", 0) or 0), reverse=True)
     save("industry_quotes.json", industry_quotes)
+
+    # ========================================
+    # 2b/8 申万二级行业涨跌幅（并发查询）
+    # ========================================
+    print("[2b/8] 申万二级行业涨跌幅（并发）...")
+
+    def query_industry_l2(name):
+        data = call_api("market", "getInduDayQuoByCond-G",
+                        {"induClassName": name, "pageNum": "1", "pageSize": "10"})
+        return [r for r in data.get("result", [])
+                if r.get("INDU_LEVEL") == "2"
+                and r.get("REST_TYPE_PAR") == "后复权"
+                and r.get("WEIGH_TYPE_PAR") == "流通市值加权"]
+
+    industry_l2_quotes = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = {pool.submit(query_industry_l2, name): name for name in SW_L2_INDUSTRIES}
+        for f in as_completed(futures):
+            industry_l2_quotes.extend(f.result())
+    industry_l2_quotes.sort(key=lambda x: float(x.get("INDU_LIMIT_DAY", 0) or 0), reverse=True)
+    save("industry_l2_quotes.json", industry_l2_quotes)
 
     # ========================================
     # 3/8 全市场个股日线行情（分页拉取全部）

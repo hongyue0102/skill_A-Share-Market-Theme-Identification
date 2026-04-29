@@ -14,6 +14,99 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).parent / "data"
 
+# 申万三级行业关键词 → 二级行业映射（用于涨停股归集到二级行业）
+SW_L3_TO_L2_KEYWORDS = {
+    # 半导体
+    "半导体": "半导体", "芯片": "半导体", "集成电路": "半导体", "分立器件": "半导体",
+    "模拟芯片": "半导体", "数字芯片": "半导体",
+    # 光学光电
+    "光学": "光学光电", "LED": "光学光电", "显示": "光学光电", "面板": "光学光电",
+    # 消费电子
+    "消费电子": "消费电子", "品牌消费电子": "消费电子",
+    # 元件
+    "PCB": "元件", "印制电路": "元件", "被动元件": "元件", "连接器": "元件",
+    # 电子化学品
+    "电子化学品": "电子化学品", "光刻": "电子化学品",
+    # 计算机
+    "软件": "软件开发", "IT服务": "IT服务", "计算机设备": "计算机设备",
+    "云计算": "软件开发", "网络安全": "软件开发", "安防": "计算机设备",
+    # 通信
+    "通信": "通信设备", "光模块": "通信设备", "光纤": "通信设备",
+    # 传媒
+    "游戏": "游戏", "影视": "影视院线", "广告": "广告营销", "出版": "出版",
+    "互联网": "数字媒体", "数字媒体": "数字媒体",
+    # 医药
+    "化学制剂": "化学制药", "中药": "中药", "生物制品": "生物制品",
+    "医疗器械": "医疗器械", "医疗设备": "医疗器械", "CXO": "医疗服务",
+    "医疗研发外包": "医疗服务", "原料药": "化学制药", "医药流通": "医药商业",
+    # 电力设备
+    "光伏": "光伏设备", "风电": "风电设备", "锂电池": "电池",
+    "储能": "电池", "电池化学品": "电池", "电网": "电网设备",
+    # 机械设备
+    "工程机械": "专用设备", "仪器仪表": "仪器仪表", "激光": "通用设备",
+    "机器人": "自动化设备", "工控": "自动化设备", "自动化": "自动化设备",
+    "专用设备": "专用设备", "通用设备": "通用设备", "制冷空调": "通用设备",
+    "金属制品": "金属制品",
+    # 国防军工
+    "军工": "航空装备", "航空装备": "航空装备", "航天": "航天装备",
+    "兵器": "航天装备", "军工电子": "军工电子",
+    # 汽车
+    "乘用车": "乘用车", "商用车": "商用车", "汽车零部件": "汽车零部件",
+    # 有色金属
+    "铜": "工业金属", "铝": "工业金属", "锂": "能源金属", "钴": "能源金属",
+    "镍": "能源金属", "稀土": "能源金属", "铅锌": "工业金属", "黄金": "贵金属",
+    "磁性材料": "金属新材料",
+    # 基础化工
+    "化学制品": "化学制品", "塑料": "塑料", "橡胶": "橡胶",
+    "涂料": "化学制品", "膜材料": "化学制品", "农药": "农化制品",
+    "氮肥": "化学原料", "磷化工": "化学原料", "氯碱": "化学原料",
+    # 公用事业
+    "火力发电": "火力发电", "燃气": "燃气",
+    # 环保
+    "环保": "环境治理", "水务": "水务", "固废": "环境治理",
+    # 煤炭
+    "煤炭开采": "煤炭开采", "焦炭": "焦炭",
+    # 石油石化
+    "石油": "油气开采", "石化": "炼化及贸易", "炼化": "炼化及贸易",
+    # 银行
+    "银行": "国有大型银行",
+    # 非银金融
+    "证券": "证券", "保险": "保险", "信托": "多元金融",
+    # 房地产
+    "住宅开发": "房地产开发", "产业地产": "房地产开发",
+    # 建筑装饰
+    "装修": "装修装饰", "装饰": "装修装饰", "基建": "基建市政",
+    # 建筑材料
+    "水泥": "水泥", "玻璃": "玻璃玻纤", "玻纤": "玻璃玻纤",
+    # 钢铁
+    "钢铁": "普钢", "特钢": "特钢",
+    # 农林牧渔
+    "种业": "种植业", "饲料": "饲料", "养殖": "养殖",
+    "农产品加工": "农产品加工", "渔业": "渔业",
+    # 食品饮料
+    "白酒": "白酒", "啤酒": "非白酒", "乳制品": "饮料乳品",
+    "调味品": "调味品", "饮料": "饮料乳品", "零食": "零食",
+    # 家用电器
+    "白电": "白色家电", "厨电": "黑色家电", "小家电": "小家电",
+    "清洁家电": "小家电", "家电零部件": "白色家电",
+    # 纺织服饰
+    "纺织": "纺织制造", "服装": "服装家纺", "鞋帽": "饰品",
+    # 轻工制造
+    "造纸": "造纸", "家具": "家居", "包装": "包装印刷",
+    "文具": "文娱用品", "家居": "家居",
+    # 商贸零售
+    "百货": "一般零售", "超市": "一般零售", "专业零售": "专业连锁",
+    # 社会服务
+    "旅游": "旅游及景区", "酒店": "酒店餐饮", "教育": "教育",
+    "餐饮": "酒店餐饮",
+    # 交通运输
+    "快递": "物流", "物流": "物流", "航空": "航空机场",
+    "港口": "航运港口", "铁路": "铁路公路", "航运": "航运港口",
+    "高速公路": "铁路公路",
+    # 美容护理
+    "化妆品": "化妆品", "医美": "医疗美容",
+}
+
 
 def load(name: str) -> list:
     with open(DATA_DIR / name, encoding="utf-8") as f:
@@ -78,11 +171,19 @@ def analyze_market_environment(heat, industry_quotes, meta):
     }
 
 
-def analyze_main_lines(industry_quotes, stock_top_rise, abnormal_trade):
-    """第二步：识别主线与次级热点"""
-    # 行业按日涨幅排序（已排好）
-    top_industries = industry_quotes[:5]  # 前5行业
-    bottom_industries = industry_quotes[-3:]  # 后3行业
+def _match_l2_from_industry_name(sw_name):
+    """从申万三级行业/证监会行业名匹配到二级行业"""
+    if not sw_name:
+        return None
+    for keyword, l2_name in SW_L3_TO_L2_KEYWORDS.items():
+        if keyword in sw_name:
+            return l2_name
+    return None
+
+
+def analyze_main_lines(industry_l2_quotes, stock_top_rise, abnormal_trade, stock_detail=None):
+    """第二步：识别主线与次级热点（基于二级行业涨幅 + 涨停集中度）"""
+    bottom_industries = industry_l2_quotes[-3:] if len(industry_l2_quotes) >= 3 else []
 
     # 涨停股按板块归类
     limit_up_stocks = [s for s in stock_top_rise
@@ -101,42 +202,85 @@ def analyze_main_lines(industry_quotes, stock_top_rise, abnormal_trade):
                 "amount": safe_float(r.get("TRADE_AMUT")),
             }
 
-    main_lines = []
-    for ind in top_industries[:2]:
-        day_limit = safe_float(ind.get("INDU_LIMIT_DAY"))
-        week_limit = safe_float(ind.get("INDU_LIMIT_1W"))
+    # --- 涨停股集中度分析：统计每个二级行业的涨停股数量 ---
+    detail_map = {}
+    if stock_detail:
+        detail_map = {r.get("code", ""): r for r in stock_detail}
+
+    l2_limit_count = {}
+    for s in limit_up_stocks:
+        code = s.get("STK_CODE", "")
+        info = detail_map.get(code, {})
+        sw_s = info.get("sw_industry_s", "")
+        sw_q = info.get("sw_industry_q", "")
+        matched = _match_l2_from_industry_name(sw_s) or _match_l2_from_industry_name(sw_q)
+        if matched:
+            l2_limit_count[matched] = l2_limit_count.get(matched, 0) + 1
+
+    max_limit = max(l2_limit_count.values()) if l2_limit_count else 0
+
+    # --- 对全部二级行业计算综合得分 ---
+    industry_scored = []
+    for idx, ind in enumerate(industry_l2_quotes):
         name = ind.get("INDU_CLASS_NAME", "")
+        limit_count = l2_limit_count.get(name, 0)
+        limit_score = round(limit_count / max_limit * 100, 1) if max_limit > 0 else 0
+        rank_score = max(0, 100 - idx * 0.8)
+        composite = round(rank_score * 0.2 + limit_score * 0.8, 1)
 
-        main_lines.append({
+        if limit_count >= 3:
+            line_type = "资金攻击型"
+        elif limit_count >= 1:
+            line_type = "资金攻击型" if limit_score >= 30 else "趋势/防御型"
+        else:
+            line_type = "趋势/防御型"
+
+        industry_scored.append({
             "name": name,
-            "day_change": day_limit,
-            "week_change": week_limit,
-            "month_change": safe_float(ind.get("INDU_LIMIT_1M")),
-            "compo_num": int(safe_float(ind.get("INDU_COMPO_NUM"))),
-        })
-
-    secondary_hot = []
-    for ind in top_industries[2:5]:
-        secondary_hot.append({
-            "name": ind.get("INDU_CLASS_NAME", ""),
             "day_change": safe_float(ind.get("INDU_LIMIT_DAY")),
             "week_change": safe_float(ind.get("INDU_LIMIT_1W")),
+            "month_change": safe_float(ind.get("INDU_LIMIT_1M")),
+            "compo_num": int(safe_float(ind.get("INDU_COMPO_NUM"))),
+            "limit_up_count": limit_count,
+            "limit_up_score": limit_score,
+            "composite_score": composite,
+            "line_type": line_type,
         })
 
+    industry_scored.sort(key=lambda x: x["composite_score"], reverse=True)
+
     return {
-        "main_lines": main_lines,
-        "secondary_hot": secondary_hot,
+        "main_lines": industry_scored[:2],
+        "secondary_hot": industry_scored[2:5],
         "bottom_industries": [{"name": i.get("INDU_CLASS_NAME"), "day_change": safe_float(i.get("INDU_LIMIT_DAY"))} for i in bottom_industries],
         "limit_up_stocks": limit_up_stocks,
         "active_directions": active_directions,
+        "l2_limit_count": l2_limit_count,
     }
 
 
-def analyze_anchor_stocks(stock_top_rise, stock_value, limit_up_count):
-    """第三步：识别龙头、中军、补涨 — 只选最有辨识度的核心锚点（排除新股）"""
+def analyze_anchor_stocks(stock_top_rise, stock_value, limit_up_count,
+                          main_line_names=None, stock_detail=None):
+    """第三步：识别龙头、中军、补涨 — 只从核心主线和第二主线的涨停股中选"""
     limit_ups = [s for s in stock_top_rise
                  if safe_float(s.get("PRICE_LIMIT")) >= 9.9
                  and safe_float(s.get("PRICE_LIMIT")) < 100]
+
+    # 如果有主线行业名，只保留属于主线行业的涨停股
+    if main_line_names and stock_detail:
+        detail_map = {r.get("code", ""): r for r in stock_detail}
+        main_line_set = set(main_line_names)
+        filtered = []
+        for s in limit_ups:
+            code = s.get("STK_CODE", "")
+            info = detail_map.get(code, {})
+            sw_s = info.get("sw_industry_s", "")
+            sw_q = info.get("sw_industry_q", "")
+            matched = _match_l2_from_industry_name(sw_s) or _match_l2_from_industry_name(sw_q)
+            if matched and matched in main_line_set:
+                filtered.append(s)
+        # 主线涨停股不足5只时回退到全市场
+        limit_ups = filtered if len(filtered) >= 5 else limit_ups
 
     # 市值数据转dict
     value_map = {}
@@ -180,11 +324,8 @@ def analyze_anchor_stocks(stock_top_rise, stock_value, limit_up_count):
     followers = [s for s in all_info if s["role"] == "补涨标的"]
 
     anchors = []
-    # 情绪标的取成交额前 3
     anchors.extend(leaders[:3])
-    # 趋势中军取前 2
     anchors.extend(mid_trend[:2])
-    # 补涨标的取成交额前 2（且不与已选重复）
     anchors.extend(followers[:2])
 
     anchors.sort(key=lambda x: x["rise"], reverse=True)
@@ -348,6 +489,10 @@ def main():
     heat = load("market_heat.json")
     index_quotes = load("index_quotes.json")
     industry_quotes = load("industry_quotes.json")
+    try:
+        industry_l2_quotes = load("industry_l2_quotes.json")
+    except FileNotFoundError:
+        industry_l2_quotes = []
     stock_top_rise = load("stock_top_rise.json")
     abnormal_trade = load("abnormal_trade.json")
     stock_value = load("stock_value.json")
@@ -360,10 +505,12 @@ def main():
     env = analyze_market_environment(heat, industry_quotes, meta)
 
     print("[2/6] 主线识别...")
-    lines = analyze_main_lines(industry_quotes, stock_top_rise, abnormal_trade)
+    lines = analyze_main_lines(industry_l2_quotes or industry_quotes, stock_top_rise, abnormal_trade, stock_detail)
 
     print("[3/6] 核心锚点...")
-    anchors = analyze_anchor_stocks(stock_top_rise, stock_value, meta.get("limit_up_count", 0))
+    main_line_names = [m["name"] for m in lines["main_lines"]]
+    anchors = analyze_anchor_stocks(stock_top_rise, stock_value, meta.get("limit_up_count", 0),
+                                    main_line_names=main_line_names, stock_detail=stock_detail)
 
     print("[4/6] 情绪周期...")
     emotion = analyze_emotion_cycle(meta, stock_top_rise, abnormal_trade, heat)
@@ -445,6 +592,7 @@ def main():
             "main_lines": lines["main_lines"],
             "secondary_hot": lines["secondary_hot"],
             "bottom_industries": lines["bottom_industries"],
+            "l2_limit_count": lines.get("l2_limit_count", {}),
         },
         "anchors": anchors,
         "emotion": emotion,
