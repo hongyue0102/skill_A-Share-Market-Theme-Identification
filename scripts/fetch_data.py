@@ -173,46 +173,43 @@ def main():
     save("market_heat.json", heat)
 
     # ========================================
-    # 2/8 申万一级行业涨跌幅（并发查询）
+    # 2/8 申万一级行业涨跌幅（按行业级别批量拉取）
     # ========================================
-    print("[2/8] 申万一级行业涨跌幅（31个行业，并发）...")
+    print("[2/8] 申万一级行业涨跌幅（induLevel=1 批量拉取）...")
 
-    def query_industry(name):
-        data = call_api("market", "getInduDayQuoByCond-G",
-                        {"induClassName": name, "pageNum": "1", "pageSize": "10"})
-        return [r for r in data.get("result", [])
-                if r.get("INDU_LEVEL") == "1"
-                and r.get("REST_TYPE_PAR") == "后复权"
+    def fetch_industry_by_level(level: str) -> list:
+        all_results = []
+        page = 1
+        while True:
+            data = call_api("market", "getInduDayQuoByCond-G",
+                            {"induLevel": level, "pageNum": str(page), "pageSize": "200"})
+            results = data.get("result", [])
+            if not results:
+                break
+            all_results.extend(results)
+            tc = data.get("totalCount")
+            if tc and len(all_results) >= int(tc):
+                break
+            page += 1
+            time.sleep(0.1)
+        return [r for r in all_results
+                if r.get("REST_TYPE_PAR") == "后复权"
                 and r.get("WEIGH_TYPE_PAR") == "流通市值加权"]
 
-    industry_quotes = []
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        futures = {pool.submit(query_industry, name): name for name in SW_L1_INDUSTRIES}
-        for f in as_completed(futures):
-            industry_quotes.extend(f.result())
+    industry_quotes = fetch_industry_by_level("1")
     industry_quotes.sort(key=lambda x: float(x.get("INDU_LIMIT_DAY", 0) or 0), reverse=True)
     save("industry_quotes.json", industry_quotes)
+    print(f"  [OK] industry_quotes.json ({len(industry_quotes)} 条)")
 
     # ========================================
-    # 2b/8 申万二级行业涨跌幅（并发查询）
+    # 2b/8 申万二级行业涨跌幅（按行业级别批量拉取）
     # ========================================
-    print("[2b/8] 申万二级行业涨跌幅（并发）...")
+    print("[2b/8] 申万二级行业涨跌幅（induLevel=2 批量拉取）...")
 
-    def query_industry_l2(name):
-        data = call_api("market", "getInduDayQuoByCond-G",
-                        {"induClassName": name, "pageNum": "1", "pageSize": "10"})
-        return [r for r in data.get("result", [])
-                if r.get("INDU_LEVEL") == "2"
-                and r.get("REST_TYPE_PAR") == "后复权"
-                and r.get("WEIGH_TYPE_PAR") == "流通市值加权"]
-
-    industry_l2_quotes = []
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        futures = {pool.submit(query_industry_l2, name): name for name in SW_L2_INDUSTRIES}
-        for f in as_completed(futures):
-            industry_l2_quotes.extend(f.result())
+    industry_l2_quotes = fetch_industry_by_level("2")
     industry_l2_quotes.sort(key=lambda x: float(x.get("INDU_LIMIT_DAY", 0) or 0), reverse=True)
     save("industry_l2_quotes.json", industry_l2_quotes)
+    print(f"  [OK] industry_l2_quotes.json ({len(industry_l2_quotes)} 条)")
 
     # ========================================
     # 3/8 全市场个股日线行情（分页拉取全部）
