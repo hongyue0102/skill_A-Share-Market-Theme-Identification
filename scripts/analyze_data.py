@@ -346,11 +346,11 @@ def analyze_emotion_cycle(meta, stock_top_rise, abnormal_trade, market_heat):
     up_ratio = safe_float(h.get("UP_NUM_PER"))
 
     # === 1. 广度维度（40%）===
-    if limit_up >= 90 and limit_down <= 5 and up_ratio >= 65:
+    if limit_up >= 90 and limit_down <= 10 and up_ratio >= 65:
         breadth_score = 4
-    elif limit_up >= 70 and limit_down <= 10 and up_ratio >= 55:
+    elif limit_up >= 70 and limit_down <= 15 and up_ratio >= 55:
         breadth_score = 3
-    elif limit_up >= 40 and limit_down <= 15 and up_ratio >= 50:
+    elif limit_up >= 40 and limit_down <= 25 and up_ratio >= 50:
         breadth_score = 2
     elif limit_up >= 20:
         breadth_score = 1
