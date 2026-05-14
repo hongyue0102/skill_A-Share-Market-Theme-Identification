@@ -25,6 +25,32 @@ SKILLS = {
     "index": SKILL_BASE / "index-market-date/scripts/api_query.py",
 }
 
+_DATA_SOURCE_INSTALL_HINT = (
+    "数据源 skill 未安装！请先前往 https://yun.ccxe.com.cn/data/Skills "
+    "下载所需的取数 skill，并放置到 wh/ 目录下。"
+)
+
+
+def _check_data_sources():
+    """检查所有取数 skill 是否已安装，未安装则打印缺失列表并退出"""
+    missing = []
+    for name, path in SKILLS.items():
+        if not path.exists():
+            missing.append(f"  - {name}: {path}")
+    if missing:
+        print("错误：以下取数 skill 未找到：")
+        for m in missing:
+            print(m)
+        print(f"\n{_DATA_SOURCE_INSTALL_HINT}")
+        sys.exit(1)
+    # 检查 .env 配置是否存在（任一 skill 的 .env 即可，共用同一 key）
+    env_file = SKILL_BASE / "stock-market-information/scripts/.env"
+    if not env_file.exists():
+        print(f"错误：API 配置文件不存在: {env_file}")
+        print(f"请参考 skill 文档配置 CXDA_USER_KEY 和 BASE_URL")
+        print(f"\n{_DATA_SOURCE_INSTALL_HINT}")
+        sys.exit(1)
+
 # 申万2021一级行业列表
 SW_L1_INDUSTRIES = [
     "美容护理", "石油石化", "电子", "钢铁", "纺织服饰", "食品饮料", "公用事业",
@@ -139,6 +165,9 @@ def main():
         date = today.strftime("%Y-%m-%d")
 
     t_start = time.time()
+
+    # 前置检查：取数 skill 是否已安装
+    _check_data_sources()
 
     print(f"=== A股主线识别数据获取 ===")
     print(f"目标日期: {date}")

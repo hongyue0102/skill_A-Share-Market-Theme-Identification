@@ -219,14 +219,26 @@ def analyze_main_lines(industry_l2_quotes, stock_top_rise, abnormal_trade, stock
 
     max_limit = max(l2_limit_count.values()) if l2_limit_count else 0
 
-    # --- 对全部二级行业计算综合得分 ---
+    # --- 对全部二级行业计算综合得分（四维评分） ---
+    # 维度：日涨幅排名(30%) + 涨停集中度(30%) + 周涨幅趋势(20%) + 月涨幅趋势(20%)
+    all_day_changes = [safe_float(ind.get("INDU_LIMIT_DAY")) for ind in industry_l2_quotes]
+    all_week_changes = [safe_float(ind.get("INDU_LIMIT_1W")) for ind in industry_l2_quotes]
+    all_month_changes = [safe_float(ind.get("INDU_LIMIT_1M")) for ind in industry_l2_quotes]
+    max_week = max(all_week_changes) if all_week_changes else 1
+    max_month = max(all_month_changes) if all_month_changes else 1
+
     industry_scored = []
     for idx, ind in enumerate(industry_l2_quotes):
         name = ind.get("INDU_CLASS_NAME", "")
         limit_count = l2_limit_count.get(name, 0)
         limit_score = round(limit_count / max_limit * 100, 1) if max_limit > 0 else 0
-        rank_score = max(0, 100 - idx * 0.8)
-        composite = round(rank_score * 0.2 + limit_score * 0.8, 1)
+        day_rank_score = max(0, 100 - idx * 0.8)
+        day_change = safe_float(ind.get("INDU_LIMIT_DAY"))
+        week_change = safe_float(ind.get("INDU_LIMIT_1W"))
+        month_change = safe_float(ind.get("INDU_LIMIT_1M"))
+        week_score = round(max(0, week_change) / max_week * 100, 1) if max_week > 0 else 0
+        month_score = round(max(0, month_change) / max_month * 100, 1) if max_month > 0 else 0
+        composite = round(day_rank_score * 0.3 + limit_score * 0.3 + week_score * 0.2 + month_score * 0.2, 1)
 
         if limit_count >= 3:
             line_type = "资金攻击型"
@@ -237,12 +249,14 @@ def analyze_main_lines(industry_l2_quotes, stock_top_rise, abnormal_trade, stock
 
         industry_scored.append({
             "name": name,
-            "day_change": safe_float(ind.get("INDU_LIMIT_DAY")),
-            "week_change": safe_float(ind.get("INDU_LIMIT_1W")),
-            "month_change": safe_float(ind.get("INDU_LIMIT_1M")),
+            "day_change": day_change,
+            "week_change": week_change,
+            "month_change": month_change,
             "compo_num": int(safe_float(ind.get("INDU_COMPO_NUM"))),
             "limit_up_count": limit_count,
             "limit_up_score": limit_score,
+            "week_score": week_score,
+            "month_score": month_score,
             "composite_score": composite,
             "line_type": line_type,
         })
